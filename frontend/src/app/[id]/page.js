@@ -24,22 +24,33 @@ function TopPage() {
     id
   ])
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(()=>{
     getUserData(id)
-  },[])
+  },[id])
 
   const getUserData = (id)=>{
+    setLoading(true);
+    setError(null);
+    
     let config = {
       method: 'get',
       url: `${baseurl}/api/user-products/${id}`,
     };
     axios(config)
         .then(async (response) => {
-
-          setProducts(response.data.products)
+          setProducts(response.data.products || []);
+          setLoading(false);
         })
         .catch((err)=>{
-
+          setLoading(false);
+          setError(
+            err.response?.data?.message || 
+            err.message || 
+            "データの取得に失敗しました。APIのURLを確認してください。"
+          );
         })
   }
 
@@ -96,31 +107,96 @@ function TopPage() {
               全ての商品
             </div>
             <div className="contain">
-              {products.map((item, index)=>(
-                  <div className="list-item" key={index}>
-                    <div className="list-item-thumb">
-                      <img src={item.image} alt=""/>
-                    </div>
-                    <h3 className="list-item-title">
-                      {item.title}
-                    </h3>
-                    <div className="list-item-package">
-                      {item.package}
-                    </div>
-                    <p className="list-item-content">
-                      {item.description}
-                    </p>
-                    <div className="list-item-price">
-                      <div className="wrap">
-                        <div className="list-item-price-title">
-                          特別限定価格
-                        </div>
-                        <p>{parseInt(item.price_sell).toLocaleString('en-US').toString()} <span>(税込)</span></p>
+              {loading ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "60px 20px",
+                    fontFamily: "hiraginoSansGBW3",
+                    fontSize: "18px",
+                    color: "#000",
+                    width: "100%",
+                  }}
+                >
+                  Loading...
+                </div>
+              ) : error ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "60px 20px",
+                    fontFamily: "hiraginoSansGBW3",
+                    fontSize: "16px",
+                    color: "#FF0000",
+                    width: "100%",
+                  }}
+                >
+                  <p style={{ marginBottom: "20px", textAlign: "center" }}>
+                    {error}
+                  </p>
+                  <button
+                    onClick={() => getUserData(id)}
+                    style={{
+                      padding: "12px 24px",
+                      borderRadius: "5px",
+                      background: "#7c0026",
+                      color: "#fff",
+                      border: "1px solid #7c0026",
+                      fontFamily: "hiraginoSansGBW6",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    再試行
+                  </button>
+                </div>
+              ) : products.length === 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: "60px 20px",
+                    fontFamily: "hiraginoSansGBW3",
+                    fontSize: "18px",
+                    color: "#000",
+                    width: "100%",
+                  }}
+                >
+                  データが見つかりませんでした
+                </div>
+              ) : (
+                products.map((item, index)=>(
+                    <div className="list-item" key={index}>
+                      <div className="list-item-thumb">
+                        <img src={item.image} alt=""/>
                       </div>
-                      <a href={`/products/${id}/${item.id}`}>今すぐ購入する</a>
+                      <h3 className="list-item-title">
+                        {item.title}
+                      </h3>
+                      <div className="list-item-package">
+                        {item.package}
+                      </div>
+                      <p className="list-item-content">
+                        {item.description}
+                      </p>
+                      <div className="list-item-price">
+                        <div className="wrap">
+                          <div className="list-item-price-title">
+                            特別限定価格
+                          </div>
+                          <p>{parseInt(item.price_sell).toLocaleString('en-US').toString()} <span>(税込)</span></p>
+                        </div>
+                        <a href={`/products/${id}/${item.id}`}>今すぐ購入する</a>
+                      </div>
                     </div>
-                  </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
           <section className="social">
